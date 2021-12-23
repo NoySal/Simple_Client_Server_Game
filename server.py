@@ -1,7 +1,7 @@
 import socket
 from threading import Thread, Lock
 from time import sleep
-
+#change
 class Server:
     def __init__(self, mode = 0):
         """
