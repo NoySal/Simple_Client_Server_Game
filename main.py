@@ -11,7 +11,7 @@ class H_server:
         print('SERVER : starting demo server')
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        message = 'fuck me beautiful'
+        message = str(0xabcddcba) + str(0x2) + str(2020)
         while True:
             try:
                 print('SERVER : trying to send a message')

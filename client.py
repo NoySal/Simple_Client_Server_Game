@@ -41,13 +41,32 @@ class Client:
         """
         listening to udp port
         """
+        def parse(msg):
+            """
+            function to parse UDP messages according to requested structure.
+            PARAM msg : str , incoming message to parse for specific structure
+            returns port if structure is according to expectations
+            """
+            try:
+                if int(msg[:10]) != 2882395322:
+                    print('Parsing error - Cookie is wrong!')
+                if int(msg[10:11]) != 2:
+                    print('Parsing error - option not supported')
+                if int(msg[11:]) <= 1024 : 
+                    print('Port is suspicious - system port detected')              
+            except:
+                print('parsing exception - message too short , length !' , len(msg))
+                return
+
+            return int(msg[12:])
+
         udp_error =0
         while True:
             print('DEBUG - listening loop&parsing entered')
             try:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
-                print('message recieved is : ' , message)
-
+                print('message decoded is ' , message.decode())
+                port = parse(message)
 
             except:
                 print('udp listening error encoutered')
