@@ -12,8 +12,44 @@ class Client:
         self.udp_socket = None
         self.tcp_socket = None
 
-    def start(self):
+    def connect(self, ip, port):
+        try:
+            tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.settimeout(30)
+            tcp_socket.connect(ip, port)
+        except:
+            print("failed to connect to server")
+        finally:
+            self.game(tcp_socket)
 
+    def game(self, tcp_socket):
+        try:
+            #send team name
+            tcp_socket.send('name \n'.encode())
+
+            #recieve math problem
+            math_problem = tcp_socket.recv(1024).decode()
+
+            #ask for answer form user and send it to the server
+            val = input(math_problem)
+            tcp_socket.send(val.encode())
+
+            #recieve game result
+            game_result = tcp_socket.recv(1024).decode()
+            print(game_result)
+        except socket.timeout:
+            print("Connection timeout")
+        except:
+            print("Error occured")
+
+        #disconnect
+        tcp_socket.close()
+        print("Server disconnected, listening for offer")
+
+        #quit game
+        self.game_over = True
+
+    def send(self, messege):
         while self.udp_socket==None:
             #try to create a udp socket
             print('DEBUG - udp socket loop entered')
@@ -22,6 +58,7 @@ class Client:
             #wait a bit
             sleep(0.5)
 
+    def start(self):
         while not self.game_over:
             print('DEBUG - not game over loop entered')
             #fetch messages
@@ -31,7 +68,7 @@ class Client:
 
             try:
                 pass
-                
+
             except:
                 print('game connect')
             #waiting a bit
@@ -60,7 +97,7 @@ class Client:
                     self.udp_socket.close()
                 except:
                     print('closing socket failed')
-                
+
                 self.udp_socket = self.assign_socket()
                 if self.udp_socket!= None:
                     udp_error=0
@@ -80,7 +117,7 @@ class Client:
             #which ip are we connecting to ? localhost\test\dev
             if self.mode==0:
                 ip =""
-            
+
             sock.bind((ip , 13117))
         except:
             sock.close()
@@ -89,6 +126,6 @@ class Client:
 
         finally:
 
-            print('Client started, listening for offer requests...') 
-            
+            print('Client started, listening for offer requests...')
+
         return sock
