@@ -15,9 +15,9 @@ class Server:
         self.question = ('2 + 2', '4')
 
     def main(self):
-        broadcast_thread = Thread(send_udp_broadcast, args= ('udp_port'))
-        connection_thread_1 = Thread(ManageTeam, args= ('ip, port'))
-        connection_thread_2 = Thread(ManageTeam, args= ('ip, port'))
+        #broadcast_thread = Thread(send_udp_broadcast, args= ('udp_port'))
+        #connection_thread_1 = Thread(ManageTeam, args= ('ip, port'))
+        #connection_thread_2 = Thread(ManageTeam, args= ('ip, port'))
         # need to add - broadcast kill
 
         while len(self.teams) != 2:
@@ -69,12 +69,12 @@ class Server:
                 tcp_socket.send(game_msg.encode())
                 answer = tcp_socket.recv(1024).decode()
                 if self.winner_lock.acquire():
-                    if answer == self.question[1]:
-                        self.winner = team_name
-                    else:
-                        self.winner = set(self.teams).difference(set(team_name))[0]
-                    #release lock? can be a problem..
-
+                    if self.winner == None:
+                        if answer == self.question[1]:
+                            self.winner = team_name
+                        else:
+                            self.winner = set(self.teams).difference(set(team_name))[0]
+                        self.winner_lock.release()
                 else: #other team answered first
                     while self.winner == None: #wait until other thread updates winner
                         sleep(0.5)

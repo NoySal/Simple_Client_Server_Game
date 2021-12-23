@@ -39,6 +39,7 @@ class Client:
             #recieve game result
             game_result = tcp_socket.recv(1024).decode()
             print(game_result)
+
         except socket.timeout:
             print("Connection timeout")
         except:
