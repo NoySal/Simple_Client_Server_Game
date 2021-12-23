@@ -13,6 +13,7 @@ class Client:
         self.tcp_socket = None
 
     def connect(self, ip, port):
+        print('DEBUG - trying to connect ')
         try:
             tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             socket.settimeout(30)
@@ -23,6 +24,7 @@ class Client:
             self.game(tcp_socket)
 
     def game(self, tcp_socket):
+        print('DEBUG - STARTING A GAME: CLIENT SIDE ')
         try:
             #send team name
             tcp_socket.send('name \n'.encode())
@@ -47,30 +49,24 @@ class Client:
         print("Server disconnected, listening for offer")
 
         #quit game
-        self.game_over = True
+        #self.game_over = True
 
-    def send(self, messege):
+
+    def start(self):
         while self.udp_socket==None:
             #try to create a udp socket
             print('DEBUG - udp socket loop entered')
             self.udp_socket = self.assign_socket()
 
             #wait a bit
-            sleep(0.5)
+            sleep(0.5)     
 
-    def start(self):
         while not self.game_over:
             print('DEBUG - not game over loop entered')
-            #fetch messages
+            #fetch messages , get port , try to connect
+
             self.listen_and_parse()
 
-            #try to connect
-
-            try:
-                pass
-
-            except:
-                print('game connect')
             #waiting a bit
             sleep(0.5)
 
@@ -108,6 +104,8 @@ class Client:
             except:
                 print('udp listening error encoutered')
                 udp_error+=1
+
+            self.connect(serverAddress , port)
 
             if udp_error==3:
                 ##reoccuring error - maybe socket failed
