@@ -15,6 +15,7 @@ class Client:
         self.tcp_socket = None
         self.ip = self.get_ip()
         self.teamName = TeamName
+        self.debug = False
 
     def start(self):
         """
@@ -24,21 +25,30 @@ class Client:
         while self.udp_socket==None:    
 
             #try to create a udp socket
-            print('DEBUG - udp socket loop entered')
+            if (self.debug):
+                print('DEBUG - udp socket loop entered')
+                sleep(2)
+
+
             self.udp_socket = self.assign_socket()
 
             #wait a bit - rerun if socket acquisition failed
             sleep(0.5)     
 
         while not self.game_over:
+            if (self.debug):
+                print('DEBUG - not game over loop entered')
+                sleep(2)
 
-            print('DEBUG - not game over loop entered')
             #fetch messages , get port , try to connect
 
             servip , servport = self.listen_and_parse()
             print(f'Received offer from {servip}, attempting to connect...')
-            
+
             self.connect(servip , servport)
+
+            if self.tcp_socket is None:  #connection failed!
+                continue
 
             self.game()
 
@@ -52,23 +62,30 @@ class Client:
         PARAM ip : string - ip recieved from UDP datagram.
         PARAM port: string  - port parsed from udp message.
         """
-        print('DEBUG - trying to connect ')
+        if (self.debug):
+            print(f'DEBUG - trying to connect to ip {ip} and port {port}')
+            sleep(2)        
+        
         try:
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.tcp_socket.settimeout(30)
-            self.tcp_socket.connect(ip, port)
-        except:
+            self.tcp_socket.connect((ip, port))
+        except Exception as e:
             self.tcp_socket.close()
-            print("failed to connect to server")
+            self.tcp_socket = None
+            print("CLIENT - failed to connect to server " + str(e))
             return # connection failed
         
 
     def game(self):
-
-        print('DEBUG - STARTING A GAME: CLIENT SIDE ')
+        if (self.debug):
+            print('DEBUG - STARTING A GAME: CLIENT SIDE ')
+            sleep(2)  
+        
         try:
             #send team name
-            self.tcp_socket.send(str(self.TeamName) + ' \n'.encode())
+            msg = str(self.teamName) + ' \n'
+            self.tcp_socket.send(msg.encode())
 
             #recieve math problem
             math_problem = self.tcp_socket.recv(1024).decode()
@@ -83,8 +100,8 @@ class Client:
 
         except socket.timeout:
             print("Connection timeout")
-        except:
-            print("Error occured")
+        except Exception as e:
+            print("Client Game Error occured " + str(e))
 
         #disconnect
         self.tcp_socket.close()
@@ -121,7 +138,10 @@ class Client:
         udp_error =0
 
         while True:
-            print('DEBUG - listening loop&parsing entered')
+            if (self.debug):
+                print('DEBUG - listening loop&parsing entered')
+                sleep(2)              
+            
             port = None
             try:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
@@ -148,7 +168,7 @@ class Client:
             #wait a bit
             sleep(0.5)
 
-        return serverAddress,port
+        return serverAddress[0],port
 
     def assign_socket(self):
         """
@@ -157,7 +177,7 @@ class Client:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             sock.bind((self.ip , 13117))
         except:
             sock.close()

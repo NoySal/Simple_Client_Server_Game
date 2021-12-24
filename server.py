@@ -2,8 +2,6 @@ from contextlib import nullcontext
 import socket
 from threading import Thread, Lock
 from time import sleep
-
-
 class Server:
     def __init__(self, mode = 0):
         """
@@ -18,23 +16,28 @@ class Server:
         self.teams = []
         self.game_ready = False
         self.winner = None
+        self.debug=True
 
     def Start(self):
-                  
-                  
+
         print(f'Server started, listening on {self.ip}')
 
         while self.tcp_socket == None:
-
+            if (self.debug):
+                print('DEBUG SERVER - creting TCP socket')
+                sleep(2)  
             tcp_port = self.tcp_port_create()
 
-        broadcast_thread = Thread(self.send_udp_broadcast , args = (tcp_port)) 
+        broadcast_thread = Thread(target = self.send_udp_broadcast , args = (tcp_port,)) 
         broadcast_thread.start()
-        ConnectionHandler = Thread(self.TCP_listner )
-        ConnectionHandler.start()
+        #ConnectionHandler = Thread(target = self.TCP_listner)
+        #ConnectionHandler.start()
 
         while True:
-
+            if (self.debug):
+                print('DEBUG SERVER - waiting for 2 players')
+                sleep(2)  
+            self.TCP_listner()
             while not self.game_ready:    #  waiting for 2 players
                 self.teams_arr_lock.acquire()
 
@@ -72,16 +75,22 @@ class Server:
         return ('2 + 2', '4')
 
 
-    def ConnectionHandler(self):
+    def TCP_listner(self):
         """
         Thread method for listening to a TCP port , and creating new threads for incoming connections.
         """
-        print('DEBUG - Connection handler is live')
+        if (self.debug):
+            print('DEBUG SERVER - TCP Listner is on socket ' + str(self.tcp_socket))
+            sleep(2)  
         try:
             self.tcp_socket.listen(2)   #wait for 2 incoming connections
+
             while True:
                 client_sock , client_add = self.tcp_socket.accept()
-                print(f'DEBUG - connection accepted from {client_add}')
+                if (self.debug):
+                    print(f'DEBUG - connection accepted from {client_add}')
+                    sleep(2)  
+                
                 player_thread = Thread(self.ManageTeam , args = (client_sock , client_add))
                 player_thread.start()
 
@@ -102,22 +111,25 @@ class Server:
 
             try:
                 server_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-                server_udp.bind((self.ip, 13117))
+                #server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+                server_udp.settimeout(0.2)
 
-            except:
-                print('Error while getting socket')
+            except socket.error: 
+                print('Server Exception : UDP socket error' )
+
+            except Exception as e:
+                print('Server Error while getting UDP socket '+str(e))
                 server_udp.close()
                 #port initialization failed - wait a bit and try again
                 sleep(2)
                 continue
 
             print('Server started, listening in IP address ' + self.ip)
-
             try:
                 while not self.game_ready:   #broadcast if there is no game happening
                     msg = str(0xabcddcba) + str(0x2) + str(port)
-                    server_udp.send(msg.encode())
+                    server_udp.sendto(msg.encode(),('<broadcast>',13117))
                     sleep(1)
             except:
                 print('Broadcast message failed  , sleeping and trying again')
@@ -187,7 +199,7 @@ class Server:
         """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind(self.ip , 0)
+            sock.bind((self.ip , 0))
         except socket.error:
             print('Failed to create and initialize socket')
             return False
