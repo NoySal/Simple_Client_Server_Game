@@ -2,7 +2,7 @@ from time import sleep
 import socket
 from client import Client
 from threading import Thread
-
+from server import Server
 class H_server:
     def __init__(self):
         return
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     cl = Client(mode=0)
     #cl.start()
     t = Thread(target = cl.start)
-    t_srv =H_server()
+    t_srv =Server()
     t.start()
     t_srv.start()
 
