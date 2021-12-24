@@ -2,6 +2,8 @@ from contextlib import nullcontext
 import socket
 from threading import Thread, Lock
 from time import sleep
+import scapy.all as scapy
+
 class Server:
     def __init__(self, mode = 0):
         """
@@ -11,12 +13,13 @@ class Server:
         self.teams_arr_lock = Lock()
         self.winner_lock = Lock()
         self.tcp_socket = None
+        self.debug=True
         self.ip = self.get_ip()
         self.question = self.rand_question()
         self.teams = []
         self.game_ready = False
         self.winner = None
-        self.debug=True
+        
 
     def Start(self):
 
@@ -24,20 +27,20 @@ class Server:
 
         while self.tcp_socket == None:
             if (self.debug):
-                print('DEBUG SERVER - creting TCP socket')
+                print('DEBUG SERVER - creating TCP socket')
                 sleep(2)  
             tcp_port = self.tcp_port_create()
 
         broadcast_thread = Thread(target = self.send_udp_broadcast , args = (tcp_port,)) 
         broadcast_thread.start()
-        #ConnectionHandler = Thread(target = self.TCP_listner)
-        #ConnectionHandler.start()
+        ConnectionHandler = Thread(target = self.TCP_listner)
+        ConnectionHandler.start()
 
         while True:
             if (self.debug):
                 print('DEBUG SERVER - waiting for 2 players')
                 sleep(2)  
-            self.TCP_listner()
+            #self.TCP_listner()
             while not self.game_ready:    #  waiting for 2 players
                 self.teams_arr_lock.acquire()
 
@@ -91,14 +94,15 @@ class Server:
                     print(f'DEBUG - connection accepted from {client_add}')
                     sleep(2)  
                 
-                player_thread = Thread(self.ManageTeam , args = (client_sock , client_add))
+                player_thread = Thread(target = self.ManageTeam , args = (client_sock , client_add))
                 player_thread.start()
 
                 #I'm not sure about sleeping here , but fuck it.
                 sleep(0.2) 
 
-        except:
+        except Exception as e:
             print('EXCEPT connection handler encountered an error and will quit!')
+            print('error code : ' + str(e))
         
 
     def send_udp_broadcast(self , port): 
@@ -127,7 +131,13 @@ class Server:
 
             print('Server started, listening in IP address ' + self.ip)
             try:
+
+
                 while not self.game_ready:   #broadcast if there is no game happening
+                    if self.debug:
+                        #print(f'DEBUG SERVER - UDP broadcast on socket {server_udp}')
+                        pass
+
                     msg = str(0xabcddcba) + str(0x2) + str(port)
                     server_udp.sendto(msg.encode(),('<broadcast>',13117))
                     sleep(1)
@@ -190,6 +200,9 @@ class Server:
         
         """
         if self.mode==0:
+            if self.debug:
+                #print('wanted ip is : ' ,scapy.get_if_addr('lo'))
+                sleep(2)
             return ""
 
     def tcp_port_create(self):
@@ -199,7 +212,11 @@ class Server:
         """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.bind((self.ip , 0))
+            if self.mode ==0:
+                sock.bind(("127.0.0.1" , 0))
+            else:
+                sock.bind((self.ip , 0))
+            
         except socket.error:
             print('Failed to create and initialize socket')
             return False

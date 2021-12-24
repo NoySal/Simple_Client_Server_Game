@@ -3,6 +3,7 @@ import socket
 from client import Client
 from threading import Thread
 from server import Server
+import scapy 
 class H_server:
     def __init__(self):
         return
@@ -24,7 +25,7 @@ class H_server:
 if __name__ == "__main__":
 
     cl = Client('Halva' ,mode=0)
-    #cl2 = Client('Bamba' ,mode=0)
+    cl2 = Client('Bamba' ,mode=0)
 
 
     t = Thread(target = cl.start)
@@ -33,8 +34,10 @@ if __name__ == "__main__":
 
     t.start()
 
-    #t2 = Thread(target = cl2.start)
+    t2 = Thread(target = cl2.start)
+    t2.start()
     t_srv.Start()
+    
 
 
 

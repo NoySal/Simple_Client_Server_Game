@@ -1,6 +1,6 @@
 from time import sleep
 import socket
-
+import scapy.all as scapy
 
 class Client:
 
@@ -13,9 +13,10 @@ class Client:
         self.game_over = False
         self.udp_socket = None
         self.tcp_socket = None
+        self.debug = True
         self.ip = self.get_ip()
         self.teamName = TeamName
-        self.debug = False
+        
 
     def start(self):
         """
@@ -65,6 +66,10 @@ class Client:
         if (self.debug):
             print(f'DEBUG - trying to connect to ip {ip} and port {port}')
             sleep(2)        
+
+
+        if self.mode ==0:  ##only change the port when on local host!
+            ip = "127.0.0.1"
         
         try:
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -79,7 +84,7 @@ class Client:
 
     def game(self):
         if (self.debug):
-            print('DEBUG - STARTING A GAME: CLIENT SIDE ')
+            print('DEBUG - Client side-  Succesful connection ')
             sleep(2)  
         
         try:
@@ -133,13 +138,13 @@ class Client:
                 print('parsing exception - message too short , length !' , len(msg))
                 return
 
-            return int(msg[12:])
+            return int(msg[11:])
 
         udp_error =0
 
         while True:
             if (self.debug):
-                print('DEBUG - listening loop&parsing entered')
+                print(f'CLIENT DEBUG - listening on port {self.udp_socket}')
                 sleep(2)              
             
             port = None
@@ -194,4 +199,7 @@ class Client:
         
         """
         if self.mode==0:
+            if (self.debug):
+                #print('wanted ip is : ' ,scapy.get_if_addr('lo'))
+                sleep(2)
             return ""
