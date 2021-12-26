@@ -125,7 +125,6 @@ class Server:
 
             try:
                 server_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM )
-                server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
                 server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                 server_udp.settimeout(0.2)
 
