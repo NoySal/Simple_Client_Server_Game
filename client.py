@@ -1,4 +1,5 @@
-from time import sleep
+from time import sleep, time
+
 import socket
 import scapy.all as scapy
 
@@ -16,13 +17,15 @@ class Client:
         self.debug = True
         self.ip = self.get_ip()
         self.teamName = TeamName
-        
-
+        self.start_time = time()
+        self.REDPILL = 90
     def start(self):
         """
         Client start function.
         Forever loop until acquiring socket , then forever loop listening and repeating games.
         """
+
+        #s_time  = time()
         while self.udp_socket==None:    
 
             #try to create a udp socket
@@ -50,6 +53,8 @@ class Client:
 
             if self.tcp_socket is None:  #connection failed!
                 continue
+            
+
 
             self.game()
 
@@ -150,11 +155,19 @@ class Client:
             port = None
             try:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
-                print('message decoded is ' , message.decode())
+                if self.mode!=2 and serverAddress[0][-2]!='87':  #spam on the server
+                    #continue
+                    print(f'last adress digits : {serverAddress[0][-2]}')
+                    pass
+                print(f'recieved message {message} from adress {serverAddress}')
+                #print('message decoded is ' , message.decode())
                 port = parse(message)
 
-            except:
-                print('udp listening error encoutered')
+          #  except socket.timeout:
+          #      pass
+            
+            except Exception as e:
+                print('udp listening error encoutered: '+str(e))
                 udp_error+=1
             if port != None:
                 break
@@ -170,6 +183,9 @@ class Client:
                 self.udp_socket = self.assign_socket()
                 if self.udp_socket!= None:
                     udp_error=0
+                
+            if time() - self.start_time > self.REDPILL:
+                return
             #wait a bit
             sleep(0.5)
 
@@ -180,13 +196,13 @@ class Client:
         assign yourself with a working udp socket to a desired ip adress
         """
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM )
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.bind((self.ip , 13117))
-        except:
+            sock.bind(("" , 13117))
+        except Exception as e:
             sock.close()
-            print('UDP socket creating ERROR')
+            print('UDP socket creating ERROR :' , str(e))
             return None
 
         print('Client started, listening for offer requests...')
@@ -196,10 +212,18 @@ class Client:
         """
         returns the IP according to environment. local\ dev \ test
         TODO: This method needs to be changed according to test \ dev zones
-        
         """
+        
         if self.mode==0:
-            if (self.debug):
-                #print('wanted ip is : ' ,scapy.get_if_addr('lo'))
-                sleep(2)
-            return ""
+            ip= ""
+
+        elif self.mode ==1:
+            ip= scapy.get_if_addr("eth1")
+
+        elif self.mode ==2:
+            ip= scapy.get_if_addr("eth2")
+
+        if self.debug:
+            print(f'CLIENT DEBUG - mode is {self.mode} , I\'m gonna return ip : {ip}')
+            sleep(2)
+        return ip 
