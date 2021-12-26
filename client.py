@@ -196,10 +196,17 @@ class Client:
         """
         returns the IP according to environment. local\ dev \ test
         TODO: This method needs to be changed according to test \ dev zones
-        
         """
+        
         if self.mode==0:
-            if (self.debug):
-                #print('wanted ip is : ' ,scapy.get_if_addr('lo'))
-                sleep(2)
-            return ""
+            ip= ""
+
+        elif self.mode ==1:
+            ip= scapy.get_if_addr("eth1")
+
+        elif self.mode ==2:
+            ip= scapy.get_if_addr("eth2")
+
+        if self.debug:
+            print(f'CLIENT DEBUG - mode is {self.mode} , I\'m gonna return ip : {ip}')
+            sleep(2)
