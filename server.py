@@ -52,7 +52,7 @@ class Server:
                 finally:
                     self.teams_arr_lock.release()
 
-                if time() - s_time > se4lf.REDPILL:
+                if time() - s_time > self.REDPILL:
                     self.kill=True
                     print('Debug - Everyone is Dead')
                     return
