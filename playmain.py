@@ -26,7 +26,7 @@ def Only_Server(mode =0):
 
 if __name__=="__main__":
 
-    Client_Server(mode = 0)
+    Client_Server(mode = 1)
     #sleep(1)
     #Only_client(0)
     #add = scapy.get_if_addr("eth1")

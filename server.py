@@ -20,7 +20,7 @@ class Server:
         self.game_ready = False
         self.winner = None
         self.kill = False
-        
+        self.REDPILL = 90
 
     def Start(self):
         
@@ -52,7 +52,7 @@ class Server:
                 finally:
                     self.teams_arr_lock.release()
 
-                if time() - s_time > 30:
+                if time() - s_time > se4lf.REDPILL:
                     self.kill=True
                     print('Debug - Everyone is Dead')
                     return
@@ -147,7 +147,8 @@ class Server:
                         pass
 
                     msg = str(0xabcddcba) + str(0x2) + str(port)
-                    server_udp.sendto(msg.encode(),('<broadcast>',13117))
+                    #server_udp.sendto(msg.encode(),('<broadcast>',13117))
+                    server_udp.sendto(msg.encode(),(self.ip[:-2]+'0',13117))
                     sleep(1)
             except:
                 print('Broadcast message failed  , sleeping and trying again')

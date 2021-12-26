@@ -18,7 +18,7 @@ class Client:
         self.ip = self.get_ip()
         self.teamName = TeamName
         self.start_time = time()
-
+        self.REDPILL = 90
     def start(self):
         """
         Client start function.
@@ -155,7 +155,12 @@ class Client:
             port = None
             try:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
-                print('message decoded is ' , message.decode())
+                if self.mode!=2 and serverAddress[0][-2]!='87':  #spam on the server
+                    #continue
+                    print(f'last adress digits : {serverAddress[0][-2]}')
+                    pass
+                print(f'recieved message {message} from adress {serverAddress}')
+                #print('message decoded is ' , message.decode())
                 port = parse(message)
 
           #  except socket.timeout:
@@ -179,7 +184,7 @@ class Client:
                 if self.udp_socket!= None:
                     udp_error=0
                 
-            if time() - self.start_time > 30:
+            if time() - self.start_time > self.REDPILL:
                 return
             #wait a bit
             sleep(0.5)
