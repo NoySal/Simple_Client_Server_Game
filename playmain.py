@@ -23,15 +23,11 @@ def Only_Server(mode =0):
     ser=Server(mode =mode)
     ser.Start()
 
-def Bad():
-    raise Exception
-def Good():
-    for i in range(10):
-        sleep(1)
-        print(i)
 
 if __name__=="__main__":
+
     Client_Server(mode = 0)
+    #sleep(1)
     #Only_client(0)
     #add = scapy.get_if_addr("eth1")
     #print(type(add))
