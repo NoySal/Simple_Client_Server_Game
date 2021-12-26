@@ -1,7 +1,7 @@
 from contextlib import nullcontext
 import socket
 from threading import Thread, Lock
-from time import sleep
+from time import sleep, time
 import scapy.all as scapy
 
 class Server:
@@ -19,10 +19,12 @@ class Server:
         self.teams = []
         self.game_ready = False
         self.winner = None
+        self.kill = False
         
 
     def Start(self):
-
+        
+        s_time = time()
         print(f'Server started, listening on {self.ip}')
 
         while self.tcp_socket == None:
@@ -43,14 +45,18 @@ class Server:
             #self.TCP_listner()
             while not self.game_ready:    #  waiting for 2 players
                 self.teams_arr_lock.acquire()
-
                 try:
-
                     if len(self.teams) ==2:
 
                         self.game_ready = True
                 finally:
                     self.teams_arr_lock.release()
+
+                if time() - s_time > 30:
+                    self.kill=True
+                    print('Debug - Everyone is Dead')
+                    return
+                sleep(0.1)
 
 
             while self.winner ==None: #game is running
@@ -84,26 +90,30 @@ class Server:
         """
         if (self.debug):
             print('DEBUG SERVER - TCP Listner is on socket ' + str(self.tcp_socket))
-            sleep(2)  
+            sleep(0.2)  
         try:
             self.tcp_socket.listen(2)   #wait for 2 incoming connections
 
-            while True:
+            while not self.kill:
+                print('Before accept, I type')
                 client_sock , client_add = self.tcp_socket.accept()
+
                 if (self.debug):
                     print(f'DEBUG - connection accepted from {client_add}')
-                    sleep(2)  
-                
+                    sleep(0.01)
+
                 player_thread = Thread(target = self.ManageTeam , args = (client_sock , client_add))
                 player_thread.start()
 
+
                 #I'm not sure about sleeping here , but fuck it.
-                sleep(0.2) 
+                sleep(0.05) 
 
         except Exception as e:
             print('EXCEPT connection handler encountered an error and will quit!')
             print('error code : ' + str(e))
         
+        print(' DEBUG - Listener Dead')
 
     def send_udp_broadcast(self , port): 
         """
@@ -111,11 +121,11 @@ class Server:
         PARAM port: int ,  TCP port the server listening on 
         """
 
-        while True:  #outer loop UDP acquisition failures for failures
+        while not self.kill:  #outer loop UDP acquisition failures for failures
 
             try:
-                server_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                #server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                server_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM )
+                server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
                 server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                 server_udp.settimeout(0.2)
 
@@ -132,8 +142,7 @@ class Server:
             print('Server started, listening in IP address ' + self.ip)
             try:
 
-
-                while not self.game_ready:   #broadcast if there is no game happening
+                while not self.game_ready and not self.kill:   #broadcast if there is no game happening
                     if self.debug:
                         #print(f'DEBUG SERVER - UDP broadcast on socket {server_udp}')
                         pass
@@ -146,6 +155,8 @@ class Server:
 
             #we are in a game session!
             sleep(10)
+
+        print(' DEBUG - Broadcast Dead')
 
     def ManageTeam(self, tcp_socket, add):
         """
@@ -213,6 +224,8 @@ class Server:
             print(f'SERVER DEBUG - mode is {self.mode} , I\'m gonna return ip : {ip}')
             sleep(2)
 
+        return ip
+
     def tcp_port_create(self):
         """
         Creates a new TCP port on required IP , and returns the tcp port assigned.
@@ -220,6 +233,7 @@ class Server:
         """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             if self.mode ==0:
                 sock.bind(("127.0.0.1" , 0))
             else:
@@ -233,4 +247,4 @@ class Server:
         return sock.getsockname()[1]   #return assigned port
     
 if __name__=="__main__":
-    print(scapy.get_if_addr("eth1"))
+    pass
