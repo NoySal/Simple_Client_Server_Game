@@ -4,6 +4,7 @@ from threading import Thread, Lock
 from time import sleep, time
 import scapy.all as scapy
 import struct
+from random import sample
 
 class Server:
     def __init__(self, mode = 0):
@@ -83,7 +84,11 @@ class Server:
         """
         TODO : this func to randomize questions and answers
         """
-        return ('2 + 2', '4')
+        bank = [('How many woman prime minister did Israel had?' , '1'),/
+                ('How many Gold medals israel won on Tokyo 2020 olympics ?  ' , '2 '),/
+                ('What is the squere root of 1 ?' , '1'),/
+                ('2 + 2', '4')]
+        return sample(bank,1)[0]
 
 
     def TCP_listner(self):
