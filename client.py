@@ -80,6 +80,8 @@ class Client:
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.tcp_socket.settimeout(30)
             self.tcp_socket.connect((ip, port))
+            if self.debug:
+                print("DEBUG - CLIENT - Connection succesful")
         except Exception as e:
             self.tcp_socket.close()
             self.tcp_socket = None
@@ -167,7 +169,7 @@ class Client:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
                 if self.mode!=2 and serverAddress[0][-2]!='87':  #spam on the server
                     #print(f'CLIENT DEBUG - recieved message from  : {serverAddress[0]}')
-                    continue
+                    
                     pass
                 print(f'recieved message {message} from adress {serverAddress}')
                 #print('message decoded is ' , message.decode())

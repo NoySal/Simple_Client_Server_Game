@@ -72,6 +72,7 @@ class Server:
             self.winner = None
 
             print('Game over, sending out offer requests...')
+            
 
     def create_stats(self):
         """

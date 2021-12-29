@@ -32,7 +32,9 @@ if __name__=="__main__":
     #add = scapy.get_if_addr("eth1")
     #print(type(add))
 
-    Only_Server(1)
-    #packed= struct.pack('IBH' , 0xabcddcba , 0x2 , 545)
+    #Only_Server(1)
+    packed= struct.pack('IBH' , 0xabcddcba , 0x2 , 545)
+    packed2= struct.pack('dbh' , 0xabcddcba , 0x2 , 545)
     #print(struct.unpack('IBH' ,packed ))
-    #print(str(0xabcddcba))
+    print(packed)
+    print(packed2)
