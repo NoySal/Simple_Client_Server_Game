@@ -3,6 +3,8 @@ import socket
 from threading import Thread, Lock
 from time import sleep, time
 import scapy.all as scapy
+import struct
+from random import sample
 
 class Server:
     def __init__(self, mode = 0):
@@ -13,27 +15,27 @@ class Server:
         self.teams_arr_lock = Lock()
         self.winner_lock = Lock()
         self.tcp_socket = None
-        self.debug=True
+        self.debug=False
         self.ip = self.get_ip()
         self.question = self.rand_question()
         self.teams = []
         self.game_ready = False
         self.winner = None
         self.kill = False
-        self.REDPILL = 90
+        self.REDPILL = 300
 
     def Start(self):
-        
+
         s_time = time()
         print(f'Server started, listening on {self.ip}')
 
         while self.tcp_socket == None:
             if (self.debug):
                 print('DEBUG SERVER - creating TCP socket')
-                sleep(2)  
+                sleep(2)
             tcp_port = self.tcp_port_create()
 
-        broadcast_thread = Thread(target = self.send_udp_broadcast , args = (tcp_port,)) 
+        broadcast_thread = Thread(target = self.send_udp_broadcast , args = (tcp_port,))
         broadcast_thread.start()
         ConnectionHandler = Thread(target = self.TCP_listner)
         ConnectionHandler.start()
@@ -41,7 +43,7 @@ class Server:
         while True:
             if (self.debug):
                 print('DEBUG SERVER - waiting for 2 players')
-                sleep(2)  
+                sleep(2)
             #self.TCP_listner()
             while not self.game_ready:    #  waiting for 2 players
                 self.teams_arr_lock.acquire()
@@ -70,18 +72,23 @@ class Server:
             self.game_ready = False
             self.winner = None
 
-            print('Game over, sending out offer requests...')     
-  
+            print('Game over, sending out offer requests...')
+            
+
     def create_stats(self):
         """
         TODO :  Something cute to keep games statistics.
-        """   
+        """
 
     def rand_question(self):
         """
         TODO : this func to randomize questions and answers
         """
-        return ('2 + 2', '4')
+        bank = [('How many woman prime minister did Israel had?' , '1'),\
+                ('How many Gold medals israel won on Tokyo 2020 olympics ?  ' , '2 '),\
+                ('What is the squere root of 1 ?' , '1'),\
+                ('2 + 2', '4')]
+        return ('How many woman prime minister did Israel had?' , '1')#sample(bank,1)[0]
 
 
     def TCP_listner(self):
@@ -90,12 +97,11 @@ class Server:
         """
         if (self.debug):
             print('DEBUG SERVER - TCP Listner is on socket ' + str(self.tcp_socket))
-            sleep(0.2)  
+            sleep(0.2)
         try:
             self.tcp_socket.listen(2)   #wait for 2 incoming connections
 
             while not self.kill:
-                print('Before accept, I type')
                 client_sock , client_add = self.tcp_socket.accept()
 
                 if (self.debug):
@@ -107,18 +113,18 @@ class Server:
 
 
                 #I'm not sure about sleeping here , but fuck it.
-                sleep(0.05) 
+                sleep(0.05)
 
         except Exception as e:
             print('EXCEPT connection handler encountered an error and will quit!')
             print('error code : ' + str(e))
-        
+
         print(' DEBUG - Listener Dead')
 
-    def send_udp_broadcast(self , port): 
+    def send_udp_broadcast(self , port):
         """
         Broadcaster threaded function. acquires UDP port and broadcast offers every 1 sec
-        PARAM port: int ,  TCP port the server listening on 
+        PARAM port: int ,  TCP port the server listening on
         """
 
         while not self.kill:  #outer loop UDP acquisition failures for failures
@@ -128,7 +134,7 @@ class Server:
                 server_udp.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
                 server_udp.settimeout(0.2)
 
-            except socket.error: 
+            except socket.error:
                 print('Server Exception : UDP socket error' )
 
             except Exception as e:
@@ -143,12 +149,16 @@ class Server:
 
                 while not self.game_ready and not self.kill:   #broadcast if there is no game happening
                     if self.debug:
-                        #print(f'DEBUG SERVER - UDP broadcast on socket {server_udp}')
-                        pass
-
-                    msg = str(0xabcddcba) + str(0x2) + str(port)
-                    #server_udp.sendto(msg.encode(),('<broadcast>',13117))
-                    server_udp.sendto(msg.encode(),(self.ip[:-2]+'0',13117))
+                        #print('DEBUG SERVER - UDP broadcast on port'+str(self.ip[:-2])+'0'+' port '+ str(13117))
+                        print('DEBIG SERVER - UDP Broadcasted')
+                    #msg = str(0xabcddcba) + str(0x2) + str(port)
+                    msg = struct.pack('IBH' , 0xabcddcba , 0x2 , port)
+                    if self.mode ==1 :
+                        udp_ip = '172.1.255.255'
+                    if self.mode ==2 :
+                        udp_ip = '172.99.255.255'
+                    server_udp.sendto(msg,(udp_ip,13117))
+                    #server_udp.sendto(msg.encode(),(self.ip,13117))
                     sleep(1)
             except:
                 print('Broadcast message failed  , sleeping and trying again')
@@ -162,7 +172,7 @@ class Server:
         """
         Thread method for accepted connection , runs the whole game session.
         PARAM sock : socket of the accepted TCP connection
-        param add : ip adress of accepted TCP connection 
+        param add : ip adress of accepted TCP connection
         """
         try:
             team_name = tcp_socket.recv(1024).decode()
@@ -172,7 +182,7 @@ class Server:
                 self.teams.append(team_name)
             finally:
                 self.teams_arr_lock.release()
-            
+
             while not self.game_ready:
                 sleep(0.1) #check if other team is ready, low inteval to not give them headstart
             sleep(10)
@@ -201,16 +211,16 @@ class Server:
             tcp_socket.send(game_result.encode())
         except socket.timeout: #time out - draw
             print('no team answered in 10 seconds, draw')
-        except:
-            print('Error during game')
-                
+        except Exception as e:
+            print('Error during game: ' + str(e))
+
     def get_ip(self):
         """
         returns the IP according to environment. local\ dev \ test
         TODO: This method needs to be changed according to test \ dev zones
-        
+
         """
-        
+
         if self.mode==0:
             ip= ""
 
@@ -238,13 +248,14 @@ class Server:
                 sock.bind(("127.0.0.1" , 0))
             else:
                 sock.bind((self.ip , 0))
-            
+
         except socket.error:
             print('Failed to create and initialize socket')
             return False
 
         self.tcp_socket = sock
         return sock.getsockname()[1]   #return assigned port
-    
+
 if __name__=="__main__":
-    pass
+    serv = Server(mode = 2)
+    serv.Start()
