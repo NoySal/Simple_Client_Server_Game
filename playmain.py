@@ -28,7 +28,7 @@ if __name__=="__main__":
 
     #Client_Server(mode = 1)
     #sleep(1)
-    #Only_client(1)
+    Only_client(1)
     #add = scapy.get_if_addr("eth1")
     #print(type(add))
 
@@ -37,5 +37,5 @@ if __name__=="__main__":
     #packed2= struct.pack('dbh' , 0xabcddcba , 0x2 , 545)
     #print(struct.unpack('IBH' ,packed ))
 
-    print(random.sample(['1' , '2'] ,1 )[0])
+    #print(random.sample(['1' , '2'] ,1 )[0])
     #print(packed2)

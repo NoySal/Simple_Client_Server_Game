@@ -18,7 +18,7 @@ class Client:
         self.ip = self.get_ip()
         self.teamName = TeamName
         self.start_time = time()
-        self.REDPILL = 90
+        self.REDPILL = 300
     def start(self):
         """
         Client start function.

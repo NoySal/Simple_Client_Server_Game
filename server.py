@@ -22,7 +22,7 @@ class Server:
         self.game_ready = False
         self.winner = None
         self.kill = False
-        self.REDPILL = 90
+        self.REDPILL = 300
 
     def Start(self):
 
