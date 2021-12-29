@@ -84,9 +84,9 @@ class Server:
         """
         TODO : this func to randomize questions and answers
         """
-        bank = [('How many woman prime minister did Israel had?' , '1'),/
-                ('How many Gold medals israel won on Tokyo 2020 olympics ?  ' , '2 '),/
-                ('What is the squere root of 1 ?' , '1'),/
+        bank = [('How many woman prime minister did Israel had?' , '1'),\
+                ('How many Gold medals israel won on Tokyo 2020 olympics ?  ' , '2 '),\
+                ('What is the squere root of 1 ?' , '1'),\
                 ('2 + 2', '4')]
         return sample(bank,1)[0]
 
@@ -102,7 +102,6 @@ class Server:
             self.tcp_socket.listen(2)   #wait for 2 incoming connections
 
             while not self.kill:
-                print('Before accept, I type')
                 client_sock , client_add = self.tcp_socket.accept()
 
                 if (self.debug):
