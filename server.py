@@ -3,6 +3,7 @@ import socket
 from threading import Thread, Lock
 from time import sleep, time
 import scapy.all as scapy
+import struct
 
 class Server:
     def __init__(self, mode = 0):
@@ -145,12 +146,13 @@ class Server:
                     if self.debug:
                         #print('DEBUG SERVER - UDP broadcast on port'+str(self.ip[:-2])+'0'+' port '+ str(13117))
                         print('DEBIG SERVER - UDP Broadcasted')
-                    msg = str(0xabcddcba) + str(0x2) + str(port)
+                    #msg = str(0xabcddcba) + str(0x2) + str(port)
+                    msg = struct.pack('IBH' , 0xabcddcba , 0x2 , port)
                     if self.mode ==1 :
                         udp_ip = '172.1.255.255'
                     if self.mode ==2 :
                         udp_ip = '172.99.255.255'
-                    server_udp.sendto(msg.encode(),(udp_ip,13117))
+                    server_udp.sendto(msg,(udp_ip,13117))
                     #server_udp.sendto(msg.encode(),(self.ip,13117))
                     sleep(1)
             except:

@@ -3,7 +3,7 @@ from threading import Thread
 from server import Server
 import scapy.all as scapy
 from time import sleep
-
+import struct
 
 def Only_client(mode = 0):
     cl = Client('Halva' ,mode=mode)
@@ -26,11 +26,13 @@ def Only_Server(mode =0):
 
 if __name__=="__main__":
 
-    Client_Server(mode = 1)
+    #Client_Server(mode = 1)
     #sleep(1)
     #Only_client(1)
     #add = scapy.get_if_addr("eth1")
     #print(type(add))
 
-    #Only_Server(1)
-
+    Only_Server(1)
+    #packed= struct.pack('IBH' , 0xabcddcba , 0x2 , 545)
+    #print(struct.unpack('IBH' ,packed ))
+    #print(str(0xabcddcba))

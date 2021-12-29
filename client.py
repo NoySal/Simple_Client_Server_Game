@@ -2,7 +2,7 @@ from time import sleep, time
 
 import socket
 import scapy.all as scapy
-
+import struct
 class Client:
 
     def __init__(self, TeamName,mode = 0):
@@ -133,6 +133,16 @@ class Client:
             returns port if structure is according to expectations
             """
             try:
+                try:
+                    cookie , option , port = struct.unpack('IBH' ,msg )
+                    if cookie != 2882395322:
+                        print('Parsing error - Cookie is wrong!')
+                    if option != 2:
+                        print('Parsing error - option not supported')
+                    return port
+                except:
+                    print('unpacking failed - trying concated strings')
+
                 if int(msg[:10]) != 2882395322:
                     print('Parsing error - Cookie is wrong!')
                 if int(msg[10:11]) != 2:
@@ -155,12 +165,13 @@ class Client:
             port = None
             try:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
-                if self.mode!=2:# and serverAddress[0]==self.ip:  #spam on the server
-                    print(f'recieved message from  : {serverAddress[0]}')
-
+                if self.mode!=2 and serverAddress[0][-2]!='87':  #spam on the server
+                    #print(f'CLIENT DEBUG - recieved message from  : {serverAddress[0]}')
+                    continue
                     pass
                 print(f'recieved message {message} from adress {serverAddress}')
                 #print('message decoded is ' , message.decode())
+
                 port = parse(message)
 
           #  except socket.timeout:
