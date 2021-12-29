@@ -14,7 +14,7 @@ class Client:
         self.game_over = False
         self.udp_socket = None
         self.tcp_socket = None
-        self.debug = True
+        self.debug = False
         self.ip = self.get_ip()
         self.teamName = TeamName
         self.start_time = time()
@@ -241,3 +241,7 @@ class Client:
             print(f'CLIENT DEBUG - mode is {self.mode} , I\'m gonna return ip : {ip}')
             sleep(2)
         return ip 
+
+if __name__   =="__main__":
+    cl = Client('MustartRats' ,mode=2)
+    cl.start()

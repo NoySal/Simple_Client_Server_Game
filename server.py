@@ -14,7 +14,7 @@ class Server:
         self.teams_arr_lock = Lock()
         self.winner_lock = Lock()
         self.tcp_socket = None
-        self.debug=True
+        self.debug=False
         self.ip = self.get_ip()
         self.question = self.rand_question()
         self.teams = []
@@ -253,4 +253,5 @@ class Server:
         return sock.getsockname()[1]   #return assigned port
 
 if __name__=="__main__":
-    pass
+    serv = Server(mode = 2)
+    serv.Start()
