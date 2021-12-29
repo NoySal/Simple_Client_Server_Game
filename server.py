@@ -192,7 +192,7 @@ class Server:
                           f'Player 2: {self.teams[1]} \n' \
                           '== \n' \
                           'Please answer the following question as fast as you can: \n'
-            game_msg = welcome_msg + self.question[0]
+            game_msg = welcome_msg + self.question
             tcp_socket.send(game_msg.encode())
             answer = tcp_socket.recv(1024).decode()
             if self.winner_lock.acquire():
