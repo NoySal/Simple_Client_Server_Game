@@ -2,7 +2,7 @@ from time import sleep, time
 
 import socket
 import scapy.all as scapy
-
+import struct
 class Client:
 
     def __init__(self, TeamName,mode = 0):
@@ -14,11 +14,11 @@ class Client:
         self.game_over = False
         self.udp_socket = None
         self.tcp_socket = None
-        self.debug = True
+        self.debug = False
         self.ip = self.get_ip()
         self.teamName = TeamName
         self.start_time = time()
-        self.REDPILL = 90
+        self.REDPILL = 300
     def start(self):
         """
         Client start function.
@@ -26,7 +26,7 @@ class Client:
         """
 
         #s_time  = time()
-        while self.udp_socket==None:    
+        while self.udp_socket==None:
 
             #try to create a udp socket
             if (self.debug):
@@ -37,7 +37,7 @@ class Client:
             self.udp_socket = self.assign_socket()
 
             #wait a bit - rerun if socket acquisition failed
-            sleep(0.5)     
+            sleep(0.5)
 
         while not self.game_over:
             if (self.debug):
@@ -53,7 +53,7 @@ class Client:
 
             if self.tcp_socket is None:  #connection failed!
                 continue
-            
+
 
 
             self.game()
@@ -61,7 +61,7 @@ class Client:
             #waiting a bit
             sleep(0.5)
 
-    
+
     def connect(self, ip, port):
         """
         Trying to initiate a TCP connection with parsed ip and port from broadcast
@@ -70,28 +70,30 @@ class Client:
         """
         if (self.debug):
             print(f'DEBUG - trying to connect to ip {ip} and port {port}')
-            sleep(2)        
+            sleep(2)
 
 
         if self.mode ==0:  ##only change the port when on local host!
             ip = "127.0.0.1"
-        
+
         try:
             self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.tcp_socket.settimeout(30)
             self.tcp_socket.connect((ip, port))
+            if self.debug:
+                print("DEBUG - CLIENT - Connection succesful")
         except Exception as e:
             self.tcp_socket.close()
             self.tcp_socket = None
             print("CLIENT - failed to connect to server " + str(e))
             return # connection failed
-        
+
 
     def game(self):
         if (self.debug):
             print('DEBUG - Client side-  Succesful connection ')
-            sleep(2)  
-        
+            sleep(2)
+
         try:
             #send team name
             msg = str(self.teamName) + ' \n'
@@ -119,7 +121,7 @@ class Client:
 
         #quit game
         #self.game_over = True
-        return 
+        return
 
     def listen_and_parse(self):
         """
@@ -133,12 +135,22 @@ class Client:
             returns port if structure is according to expectations
             """
             try:
+                try:
+                    cookie , option , port = struct.unpack('IBH' ,msg )
+                    if cookie != 2882395322:
+                        print('Parsing error - Cookie is wrong!')
+                    if option != 2:
+                        print('Parsing error - option not supported')
+                    return port
+                except:
+                    print('unpacking failed - trying concated strings')
+
                 if int(msg[:10]) != 2882395322:
                     print('Parsing error - Cookie is wrong!')
                 if int(msg[10:11]) != 2:
                     print('Parsing error - option not supported')
-                if int(msg[11:]) <= 1024 : 
-                    print('Port is suspicious - system port detected')              
+                if int(msg[11:]) <= 1024 :
+                    print('Port is suspicious - system port detected')          
             except:
                 print('parsing exception - message too short , length !' , len(msg))
                 return
@@ -150,22 +162,23 @@ class Client:
         while True:
             if (self.debug):
                 print(f'CLIENT DEBUG - listening on port {self.udp_socket}')
-                sleep(2)              
-            
+                sleep(2)
+
             port = None
             try:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
                 if self.mode!=2 and serverAddress[0][-2]!='87':  #spam on the server
-                    #continue
-                    print(f'last adress digits : {serverAddress[0][-2]}')
+                    #print(f'CLIENT DEBUG - recieved message from  : {serverAddress[0]}')
+                    
                     pass
                 print(f'recieved message {message} from adress {serverAddress}')
                 #print('message decoded is ' , message.decode())
+
                 port = parse(message)
 
           #  except socket.timeout:
           #      pass
-            
+
             except Exception as e:
                 print('udp listening error encoutered: '+str(e))
                 udp_error+=1
@@ -183,7 +196,7 @@ class Client:
                 self.udp_socket = self.assign_socket()
                 if self.udp_socket!= None:
                     udp_error=0
-                
+
             if time() - self.start_time > self.REDPILL:
                 return
             #wait a bit
@@ -198,8 +211,8 @@ class Client:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM )
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.bind(("" , 13117))
+            #sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.bind((self.ip, 13117))
         except Exception as e:
             sock.close()
             print('UDP socket creating ERROR :' , str(e))
@@ -213,17 +226,22 @@ class Client:
         returns the IP according to environment. local\ dev \ test
         TODO: This method needs to be changed according to test \ dev zones
         """
-        
+
         if self.mode==0:
             ip= ""
 
         elif self.mode ==1:
-            ip= scapy.get_if_addr("eth1")
-
+           # ip= scapy.get_if_addr("eth1")
+            ip = "172.1.255.255"
         elif self.mode ==2:
-            ip= scapy.get_if_addr("eth2")
+            #ip= scapy.get_if_addr("eth2")
+            ip = "172.99.255.255"
 
         if self.debug:
             print(f'CLIENT DEBUG - mode is {self.mode} , I\'m gonna return ip : {ip}')
             sleep(2)
         return ip 
+
+if __name__   =="__main__":
+    cl = Client('MustartRats' ,mode=2)
+    cl.start()
