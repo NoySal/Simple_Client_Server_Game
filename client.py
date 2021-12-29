@@ -157,7 +157,6 @@ class Client:
                 message,serverAddress = self.udp_socket.recvfrom(2048)
                 if self.mode!=2:# and serverAddress[0]==self.ip:  #spam on the server
                     print(f'recieved message from  : {serverAddress[0]}')
-                    continue
 
                     pass
                 print(f'recieved message {message} from adress {serverAddress}')
